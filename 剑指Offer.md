@@ -46,21 +46,16 @@
 
 思路：
 
-DFS
+递归。
 
 	import java.util.ArrayList;
 	public class Solution {
+	    ArrayList<Integer> list = new ArrayList<>();
 	    public ArrayList<Integer> printListFromTailToHead(ListNode listNode) {
-	        ArrayList<Integer> list = new ArrayList<>();
 	        if(listNode == null) return list;
-	        helper(list, listNode);
-	        return list;
-	    }
-	    private void helper(ArrayList<Integer> list, ListNode listNode){
-	        if(listNode.next != null){
-	            helper(list, listNode.next);
-	        }
+	        if(listNode.next != null) printListFromTailToHead(listNode.next);
 	        list.add(listNode.val);
+	        return list;
 	    }
 	}
 
@@ -581,7 +576,7 @@ BFS。
 
 思路：
 
-注意：每次递归如果检查到最后不符合要求，应把最后一个值删除，从而不影响后续的添加。
+回溯。
 
 	public class Solution {
 	    ArrayList<ArrayList<Integer>> result = new ArrayList<>();
@@ -666,6 +661,53 @@ BFS。
 
 回溯。
 
+固定A不动，然后交换B与C，从而得到"ABC" 和 "ACB"
+同理，对于"BAC"、"BCA" 、"CAB"和"CBA"是同样道理。
+当两个字符相同时，不应该交换。
+
+- 递归函数的功能：dfs(int pos, string s), 表示固定字符串s的pos下标的字符s[pos] 
+- 递归终止条件：当pos+1 == s.length()的时候，终止，表示对最后一个字符进行固定，也就说明，完成了一次全排列 
+- 下一次递归：dfs(pos+1, s), 很显然，下一次递归就是对字符串的下一个下标进行固定
+
+回溯：每次递归完成后，须重新交换回来。
+
+	import java.util.ArrayList;
+	import java.util.Collections;
+	public class Solution 
+	{
+	    public ArrayList<String> Permutation(String str)
+	    {
+	        ArrayList<String> res=new ArrayList<String>();
+	        if(str.length()==0||str==null)return res;
+	        int n= str.length();
+	        helper(res,0,str.toCharArray());
+	        Collections.sort(res);
+	        return res;
+	         
+	    }
+	    public void helper( ArrayList<String> res,int index,char []s)
+	    {
+	        if(index==s.length-1)res.add(new String(s));
+	        for(int i=index;i<s.length;i++)
+	        {
+	            if(i==index||s[index]!=s[i])
+	            {
+	                swap(s,index,i);
+	                helper(res,index+1,s);
+	                swap(s,index,i);
+	            }
+	        }
+	         
+	    }
+	     
+	    public void swap(char[]t,int i,int j)
+	     {
+	        char c=t[i];
+	        t[i]=t[j];
+	        t[j]=c;
+	    }
+	}
+
 ## 28.数组中出现次数超过一半的数字 ##
 
 数组中有一个数字出现的次数超过数组长度的一半，请找出这个数字。例如输入一个长度为9的数组{1,2,3,2,2,2,5,4,2}。由于数字2在数组中出现了5次，超过数组长度的一半，因此输出2。如果不存在则输出0。
@@ -748,6 +790,27 @@ HZ偶尔会拿些专业问题来忽悠那些非计算机专业的同学。今天
 ## 31.整数中1出现的次数 ##
 
 求出1~13的整数中1出现的次数,并算出100~1300的整数中1出现的次数？为此他特别数了一下1~13中包含1的数字有1、10、11、12、13因此共出现6次,但是对于后面问题他就没辙了。ACMer希望你们帮帮他,并把问题更加普遍化,可以很快的求出任意非负整数区间中1出现的次数（从1 到 n 中1出现的次数）。
+
+思路：
+
+将一个数字中1出现的次数拆成个、十、百位中1出现次数的和以321为例：  
+
+- cnt = 32 + 1，把321拆成高位32和1，固定个位是1，高位的取值可以是0~31共32个数，由于低位为1大于0，所以高位还可以取32（即数字321），则个位上1出现的次数是32+1=33 
+- cnt = 30 + 10，把321拆成高位3和21，固定十位是1，高位可以取 0 ~ 2 共30个数，由于低位是21-10+1大于0，所以高位还可以取3（即数字310~319），则十位上1出现的次数是30 + 10 = 40 
+- cnt = 0 + 100，把321拆成高位0和321，固定百位是1，高位可以取 0 个数，由于低位是321-100+1大于0，所以可以取数字100~199），则百位上1出现的次数是0 + 100 = 100  
+
+所以321中1出现的次数是173
+
+	public class Solution {
+	    public int NumberOf1Between1AndN_Solution(int n) {
+	        int cnt = 0, i = 1;
+	        while(i<=n){
+	            cnt += n / (i * 10) * i + Math.min(Math.max(n % (i * 10) - i + 1, 0), i);
+	            i *= 10;
+	        }
+	        return cnt;
+	    }
+	}
 
 ## 32.把数组排成最小的数 ##
 
@@ -1401,25 +1464,25 @@ B[0]没有左，B[n-1]没有右。
 1. 让fast一次走两步， slow一次走一步，第一次相遇在C处，停止 
 1. 然后让fast指向头结点，slow原地不动，让后fast，slow每次走一步，当再次相遇，就是入口结点。
 
-	public class Solution {
-	
-	    public ListNode EntryNodeOfLoop(ListNode pHead)
-	    {
-	        if(pHead == null || pHead.next == null || pHead.next.next == null) return null;
-	        ListNode p1 = pHead.next, p2 = pHead.next.next;
-	        while(p1 != p2){
-	            if(p1.next == null || p2.next.next == null) return null;
-	            p1 = p1.next;
-	            p2 = p2.next.next;
-	        }
-	        p2 = pHead;
-	        while(p1 != p2){
-	            p1 = p1.next;
-	            p2 = p2.next;
-	        }
-	        return p2;
-	    }
-	}
+		public class Solution {
+		
+		    public ListNode EntryNodeOfLoop(ListNode pHead)
+		    {
+		        if(pHead == null || pHead.next == null || pHead.next.next == null) return null;
+		        ListNode p1 = pHead.next, p2 = pHead.next.next;
+		        while(p1 != p2){
+		            if(p1.next == null || p2.next.next == null) return null;
+		            p1 = p1.next;
+		            p2 = p2.next.next;
+		        }
+		        p2 = pHead;
+		        while(p1 != p2){
+		            p1 = p1.next;
+		            p2 = p2.next;
+		        }
+		        return p2;
+		    }
+		}
    
 ## 56.删除链表中重复的结点 ##
 
@@ -1702,13 +1765,105 @@ BFS，使用队列，用一个标志位来决定是否需要翻转。
 
 回溯。
 
+	public class Solution {
+	    public boolean hasPath(char[] matrix, int rows, int cols, char[] str)
+	    {
+	        //标志位，初始化为false
+	        boolean[] flag = new boolean[matrix.length];
+	        for(int i=0;i<rows;i++){
+	            for(int j=0;j<cols;j++){
+	                 //循环遍历二维数组，找到起点等于str第一个元素的值，再递归判断四周是否有符合条件的----回溯法
+	                 if(judge(matrix,i,j,rows,cols,flag,str,0)){
+	                     return true;
+	                 }
+	            }
+	        }
+	        return false;
+	    }
+	     
+	    //judge(初始矩阵，索引行坐标i，索引纵坐标j，矩阵行数，矩阵列数，待判断的字符串，字符串索引初始为0即先判断字符串的第一位)
+	    private boolean judge(char[] matrix,int i,int j,int rows,int cols,boolean[] flag,char[] str,int k){
+	        //先根据i和j计算匹配的第一个元素转为一维数组的位置
+	        int index = i*cols+j;
+	        //递归终止条件
+	        if(i<0 || j<0 || i>=rows || j>=cols || matrix[index] != str[k] || flag[index] == true)
+	            return false;
+	        //若k已经到达str末尾了，说明之前的都已经匹配成功了，直接返回true即可
+	        if(k == str.length-1)
+	            return true;
+	        //要走的第一个位置置为true，表示已经走过了
+	        flag[index] = true;
+	         
+	        //回溯，递归寻找，每次找到了就给k加一，找不到，还原
+	        if(judge(matrix,i-1,j,rows,cols,flag,str,k+1) ||
+	           judge(matrix,i+1,j,rows,cols,flag,str,k+1) ||
+	           judge(matrix,i,j-1,rows,cols,flag,str,k+1) ||
+	           judge(matrix,i,j+1,rows,cols,flag,str,k+1)  )
+	        {
+	            return true;
+	        }
+	        //走到这，说明这一条路不通，还原，再试其他的路径
+	        flag[index] = false;
+	        return false;
+	    }
+	}
+
 ## 66.机器人的运动范围 ##
 
 地上有一个m行和n列的方格。一个机器人从坐标0,0的格子开始移动，每一次只能向左，右，上，下四个方向移动一格，但是不能进入行坐标和列坐标的数位之和大于k的格子。 例如，当k为18时，机器人能够进入方格（35,37），因为3+5+3+7 = 18。但是，它不能进入方格（35,38），因为3+5+3+8 = 19。请问该机器人能够达到多少个格子？
 
 思路：
 
-搜索。
+搜索。需要标记走过的路线。
+
+	public class Solution {
+	
+	    // 判断坐标是否符合要求
+	    public boolean isValid(int row, int col, int threshold){
+	        int sum = 0;
+	        while(row > 0){
+	            sum += row%10;
+	            row = row/10;
+	        }
+	        while(col > 0){
+	            sum += col%10;
+	            col = col/10;
+	        }
+	        if(sum > threshold)return false;
+	        else return true;
+	    }
+	    //统计能够走到的次数
+	    public int count = 0;
+	
+	    public void help(int i, int j, int threshold, int rows, int cols, int[][] flag){
+	        if(i < 0 || i >= rows || j < 0 || j >= cols)return;//如果坐标不符合则不计数
+	        if(flag[i][j] == 1)return;//如果曾经被访问过则不计数
+	        if(!isValid(i, j, threshold)){
+	            flag[i][j] = 1;//如果不满足坐标有效性，则不计数并且标记是访问的
+	            return;
+	        }
+	        //无论是广度优先遍历还是深度优先遍历，我们一定要知道的时候遍历一定会有终止条件也就是要能够停止，
+	        //不然程序就会陷入死循环，这个一定是我们做此类题目必须要注意的地方
+	        flag[i][j] = 1;
+	        count++;
+	         //向上，此题目不需要
+	        //help(i-1, j, threshold, rows, cols, flag);//遍历上下左右节点
+	        //向下
+	        help(i+1, j, threshold, rows, cols, flag);
+	        //向左，此题目不需要
+	        //help(i, j-1, threshold, rows, cols, flag);
+	        //向右
+	        help(i, j+1, threshold, rows, cols, flag);
+	    }
+	
+	
+	    public int movingCount(int threshold, int rows, int cols)
+	    {
+	        int[][] flag = new int[rows][cols];
+	        help(0, 0, threshold, rows, cols, flag);
+	        return count;
+	    }
+	}
 
 ## 67.剪绳子 ##
 
